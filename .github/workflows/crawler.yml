@@ -40,7 +40,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
   actions: write
 
 jobs:
@@ -137,3 +137,25 @@ jobs:
           S3_REGION: ${{ secrets.S3_REGION }}
           GITHUB_ACTIONS: true
         run: uv run python -m trendradar
+
+      - name: Commit reports to repository
+        if: success()
+        run: |
+          # 获取今天的日期
+          TODAY=$(date +%Y-%m-%d)
+          
+          # 配置 git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 添加报告文件
+          git add output/ || true
+          
+          # 检查是否有更改
+          if git diff --staged --quiet; then
+            echo "No new reports to commit"
+          else
+            git commit -m "📊 Daily report: $TODAY"
+            git push
+            echo "✅ Reports committed successfully"
+          fi
